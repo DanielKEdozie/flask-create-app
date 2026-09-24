@@ -41,6 +41,14 @@ def test_scaffold_factory_app():
                 compile(f.read(), str(py_file), "exec")
 
 
+def test_scaffold_current_directory_dot():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_dir = scaffold_project(".", target_path=tmpdir, factory=True, init_git=False)
+        assert out_dir == Path(tmpdir).resolve()
+        assert (out_dir / "wsgi.py").exists()
+        assert (out_dir / "app" / "__init__.py").exists()
+
+
 def test_cli_execution():
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -49,3 +57,23 @@ def test_cli_execution():
         assert "Project created successfully" in res.output
         assert Path("test_cli_project/wsgi.py").exists()
         assert Path("test_cli_project/app/__init__.py").exists()
+
+
+def test_cli_dot_scaffold():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        res = runner.invoke(main, [".", "--factory", "--no-git"])
+        assert res.exit_code == 0
+        assert "current directory" in res.output
+        assert Path("wsgi.py").exists()
+        assert Path("app/__init__.py").exists()
+
+
+def test_cli_here_flag():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        res = runner.invoke(main, ["--here", "--no-git"])
+        assert res.exit_code == 0
+        assert "current directory" in res.output
+        assert Path("app.py").exists()
+        assert Path("config.py").exists()

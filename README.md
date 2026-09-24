@@ -18,32 +18,31 @@ pip install git+https://github.com/DanielKEdozie/flask-create-app.git
 
 ## Usage
 
-### 1. Simple Modular Layout (Prototypes & Microservices)
+### 1. Scaffold in Current Directory (No Subfolder)
+
+If you have already created or opened your project folder (e.g. `mkdir my-app && cd my-app`), you do **not** need to declare a project name:
 
 ```bash
-flask-create-app my_microservice
+# Using '.'
+flask-create-app . --factory
+
+# Or using '--here' flag
+flask-create-app --here --factory
 ```
 
-Generates:
-```text
-my_microservice/
-├── app.py             # Single-file modular app with models & routes
-├── config.py          # App & FUA_* configurations
-├── requirements.txt   # Pinned dependencies
-├── .env / .env.example
-├── .gitignore
-└── README.md
-```
+- Infers the project name automatically from the current directory name.
+- Generates the structure directly in the current directory without creating nested folders.
+- Preserves existing `.env` or `README.md` files if already present.
 
 ---
 
-### 2. Enterprise Application Factory (`--factory`)
+### 2. Scaffold in a New Subfolder
 
 ```bash
 flask-create-app my_enterprise_app --factory
 ```
 
-Generates the scalable Application Factory pattern (`create_app()`):
+Creates `./my_enterprise_app/` with the scalable Application Factory pattern (`create_app()`):
 ```text
 my_enterprise_app/
 ├── app/
@@ -73,13 +72,36 @@ my_enterprise_app/
 
 ---
 
+### 3. Simple Modular Layout (Prototypes & Microservices)
+
+```bash
+flask-create-app my_microservice
+```
+
+Generates:
+```text
+my_microservice/
+├── app.py             # Single-file modular app with models & routes
+├── config.py          # App & FUA_* configurations
+├── requirements.txt   # Pinned dependencies
+├── .env / .env.example
+├── .gitignore
+└── README.md
+```
+
+---
+
 ## Command Options
 
 ```text
 Usage: flask-create-app [OPTIONS] [PROJECT_NAME]
 
+Arguments:
+  [PROJECT_NAME]              Name of the project to create, or '.' for current directory.
+
 Options:
-  --factory / --simple        Generate modular Application Factory structure (default: --simple).
+  --factory                   Generate modular Application Factory structure.
+  -c, --here                  Generate structure directly in current directory.
   --db [sqlite|postgres|mysql]
                               Target database dialect (default: sqlite).
   --auth / --no-auth          Include flask-user-auth dual auth (default: --auth).

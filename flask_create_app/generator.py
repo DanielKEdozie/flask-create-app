@@ -5,9 +5,11 @@ from pathlib import Path
 from typing import Dict, Optional
 
 
-def write_file(path: Path, content: str) -> None:
+def write_file(path: Path, content: str, overwrite: bool = True) -> None:
     """Create directory if needed and write file without BOM."""
     path.parent.mkdir(parents=True, exist_ok=True)
+    if not overwrite and path.exists():
+        return
     with open(path, "w", encoding="utf-8") as f:
         f.write(content.strip() + "\n")
 
@@ -408,7 +410,7 @@ if __name__ == "__main__":
 
 
 def scaffold_project(
-    project_name: str,
+    project_name: Optional[str] = None,
     target_path: Optional[str] = None,
     factory: bool = False,
     db: str = "sqlite",
@@ -417,19 +419,30 @@ def scaffold_project(
     include_utility: bool = True,
     init_git: bool = True,
 ) -> Path:
-    """Scaffold a complete Flask project."""
-    base_dir = Path(target_path or ".") / project_name
+    """Scaffold a complete Flask project into target_path or a new subfolder."""
+    if not project_name or project_name == ".":
+        base_dir = Path(target_path or ".").resolve()
+        effective_name = base_dir.name
+    elif target_path:
+        base_dir = (Path(target_path) / project_name).resolve()
+        effective_name = project_name
+    else:
+        base_dir = Path(project_name).resolve()
+        effective_name = project_name
+
+    effective_name = effective_name.strip().replace(" ", "_").replace("-", "_") or "flask_app"
     base_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate Common Files:
     write_file(base_dir / "requirements.txt", generate_requirements(include_auth, include_api, include_utility, db))
-    write_file(base_dir / ".env.example", generate_env(project_name, db))
-    write_file(base_dir / ".env", generate_env(project_name, db))
-    write_file(base_dir / ".gitignore", generate_gitignore())
+    write_file(base_dir / ".env.example", generate_env(effective_name, db))
+    write_file(base_dir / ".env", generate_env(effective_name, db), overwrite=False)
+    write_file(base_dir / ".gitignore", generate_gitignore(), overwrite=False)
 
-    readme_content = f"""# {project_name}
+    layout_label = "Application Factory" if factory else "Simple modular"
+    readme_content = f"""# {effective_name}
 
-Generated with `flask-create-app` ({'Application Factory' if factory else 'Simple modular'} layout).
+Generated with `flask-create-app` ({layout_label} layout).
 
 ## Quick Start
 
@@ -449,16 +462,17 @@ Generated with `flask-create-app` ({'Application Factory' if factory else 'Simpl
    flask run
    ```
 """
-    write_file(base_dir / "README.md", readme_content)
+    write_file(base_dir / "README.md", readme_content, overwrite=False)
 
     if factory:
-        generate_factory_app(base_dir, project_name, db, include_auth, include_api, include_utility)
+        generate_factory_app(base_dir, effective_name, db, include_auth, include_api, include_utility)
     else:
-        generate_simple_app(base_dir, project_name, db, include_auth, include_api, include_utility)
+        generate_simple_app(base_dir, effective_name, db, include_auth, include_api, include_utility)
 
     if init_git:
         try:
-            subprocess.run(["git", "init"], cwd=base_dir, capture_output=True, check=False)
+            if not (base_dir / ".git").exists():
+                subprocess.run(["git", "init"], cwd=base_dir, capture_output=True, check=False)
         except Exception:
             pass
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flask-create-app"
-version = "1.0.0"
+version = "1.1.0"
 description = "Modern scaffolding CLI to generate production-ready Flask applications and Application Factory projects."
 readme = "README.md"
 requires-python = ">=3.10"
